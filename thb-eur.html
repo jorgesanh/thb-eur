@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="theme-color" content="#0f0f0f" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-inset" />
+<meta name="apple-mobile-web-app-title" content="฿→€" />
+<title>฿ → €</title>
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22THB%20to%20EUR%22%2C%22short_name%22%3A%22%E0%B8%BF%E2%86%92%E2%82%AC%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0f0f%22%2C%22theme_color%22%3A%22%230f0f0f%22%7D" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: rgba(255,255,255,0.1);
+    --text: #f0f0f0;
+    --muted: #666;
+    --accent: #e8e0c8;
+    --green: #4a9e6b;
+    --red: #c25f5f;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-sans: system-ui, -apple-system, sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px;
+    padding-top: env(safe-area-inset-top, 20px);
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+    min-height: 100%;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0 0;
+  }
+
+  .app-title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 0 4px 12px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .refresh-btn:active { color: var(--text); }
+  .refresh-btn.spinning { animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .rate-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 0;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .dot.live { background: var(--green); }
+  .dot.error { background: var(--red); }
+
+  .rate-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .block { margin-bottom: 28px; }
+
+  .label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-family: var(--font-sans);
+  }
+
+  #thb {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 52px;
+    font-weight: 300;
+    padding: 0 0 10px;
+    outline: none;
+    letter-spacing: -0.02em;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  #thb::-webkit-outer-spin-button,
+  #thb::-webkit-inner-spin-button { -webkit-appearance: none; }
+  #thb::placeholder { color: rgba(255,255,255,0.12); }
+  #thb:focus { border-bottom-color: var(--accent); }
+
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 28px;
+    color: var(--muted);
+  }
+  .arrow-line { flex: 1; height: 0.5px; background: var(--border); }
+  .arrow-sym { font-size: 16px; }
+
+  #eur-out {
+    font-family: var(--font-mono);
+    font-size: 52px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    color: var(--muted);
+    transition: color 0.2s;
+    min-height: 60px;
+    line-height: 1.15;
+  }
+  #eur-out.has-value { color: var(--accent); }
+
+  .quick-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .qbtn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .qbtn:active { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  .footer {
+    margin-top: auto;
+    padding-top: 24px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    font-family: var(--font-mono);
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="app-title">THB → EUR</span>
+  <button class="refresh-btn" id="refresh-btn" onclick="fetchRate()" title="Refresh rate">↻</button>
+</div>
+
+<div class="rate-strip">
+  <div class="dot" id="dot"></div>
+  <span class="rate-text" id="rate-text">loading rate…</span>
+</div>
+
+<div class="block">
+  <div class="label">Thai Baht ฿</div>
+  <input id="thb" type="number" inputmode="decimal" placeholder="0" autofocus oninput="convert()" />
+</div>
+
+<div class="arrow-row">
+  <div class="arrow-line"></div>
+  <span class="arrow-sym">↓</span>
+  <div class="arrow-line"></div>
+</div>
+
+<div class="block">
+  <div class="label">Euro €</div>
+  <div id="eur-out">—</div>
+</div>
+
+<div class="block">
+  <div class="quick-row">
+    <button class="qbtn" onclick="setVal(50)">฿50</button>
+    <button class="qbtn" onclick="setVal(60)">฿60</button>
+    <button class="qbtn" onclick="setVal(70)">฿70</button>
+    <button class="qbtn" onclick="setVal(80)">฿80</button>
+    <button class="qbtn" onclick="setVal(90)">฿90</button>
+    <button class="qbtn" onclick="setVal(100)">฿100</button>
+    <button class="qbtn" onclick="setVal(200)">฿200</button>
+    <button class="qbtn" onclick="setVal(300)">฿300</button>
+    <button class="qbtn" onclick="setVal(400)">฿400</button>
+    <button class="qbtn" onclick="setVal(1000)">฿1K</button>
+  </div>
+</div>
+
+<div class="footer">frankfurter.app · updates on open</div>
+
+<script>
+let rate = null;
+const CACHE_KEY = 'thb_eur_rate';
+const CACHE_TS_KEY = 'thb_eur_ts';
+
+function loadCache() {
+  const r = localStorage.getItem(CACHE_KEY);
+  const ts = localStorage.getItem(CACHE_TS_KEY);
+  if (r && ts) {
+    rate = parseFloat(r);
+    const age = Math.round((Date.now() - parseInt(ts)) / 60000);
+    setRateDisplay(rate, age + 'm ago', false);
+    convert();
+  }
+}
+
+function setRateDisplay(r, suffix, live) {
+  document.getElementById('dot').className = 'dot' + (live ? ' live' : '');
+  document.getElementById('rate-text').textContent =
+    '1 ฿ = €' + r.toFixed(5) + '  ·  ' + suffix;
+}
+
+async function fetchRate() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  document.getElementById('dot').className = 'dot';
+  document.getElementById('rate-text').textContent = 'fetching…';
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?from=THB&to=EUR');
+    const data = await res.json();
+    rate = data.rates.EUR;
+    localStorage.setItem(CACHE_KEY, rate);
+    localStorage.setItem(CACHE_TS_KEY, Date.now());
+    const now = new Date();
+    const t = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setRateDisplay(rate, 'live · ' + t, true);
+    convert();
+  } catch (e) {
+    document.getElementById('dot').className = 'dot error';
+    document.getElementById('rate-text').textContent = rate
+      ? 'offline — using cached rate'
+      : 'offline — no rate available';
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+function convert() {
+  const inp = document.getElementById('thb').value;
+  const out = document.getElementById('eur-out');
+  if (!inp || isNaN(inp) || !rate) {
+    out.textContent = '—';
+    out.className = '';
+    return;
+  }
+  const v = parseFloat(inp) * rate;
+  out.textContent = '€' + v.toLocaleString('de-DE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  out.className = 'has-value';
+}
+
+function setVal(n) {
+  document.getElementById('thb').value = n;
+  convert();
+}
+
+loadCache();
+fetchRate();
+</script>
+</body>
+</html>
