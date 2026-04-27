@@ -335,24 +335,11 @@ function render() {
   }
 }
 
-/* ───── Switch active currency, preserving displayed values ───── */
+/* ───── Tap a row to make it active and reset the input ───── */
 function switchTo(currency) {
-  if (currency === active) return;
-  const other = computeOther();   // current value of the OTHER currency
   active = currency;
   localStorage.setItem(ACTIVE_KEY, active);
-  if (other !== null) {
-    const dec = CURRENCIES[active].decimals;
-    if (dec === 0) {
-      inputStr = String(Math.round(other));
-    } else {
-      inputStr = other.toFixed(dec);
-      // Strip trailing ".00" for cleanliness
-      if (inputStr.endsWith('.' + '0'.repeat(dec))) {
-        inputStr = inputStr.split('.')[0];
-      }
-    }
-  }
+  inputStr = '';
   render();
   if (navigator.vibrate) navigator.vibrate(8);
 }
