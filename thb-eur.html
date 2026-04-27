@@ -205,7 +205,8 @@
     background: var(--surface);
     color: var(--text);
   }
-  .key.zero { grid-column: span 4; }
+  .key.zero { grid-column: span 2; }
+  .key.multi-zero { font-size: 26px; color: var(--muted); }
 
   /* ───── Tiny screens ───── */
   @media (max-height: 720px) {
@@ -214,6 +215,7 @@
     .numpad { gap: 6px; height: 50dvh; }
     .key { font-size: 26px; border-radius: 12px; }
     .key.action { font-size: 22px; }
+    .key.multi-zero { font-size: 22px; }
     .preset { font-size: 15px; padding: 10px 16px; }
   }
 </style>
@@ -267,6 +269,8 @@
   <button class="key" data-key=".">.</button>
 
   <button class="key zero" data-key="0">0</button>
+  <button class="key multi-zero" data-key="00">00</button>
+  <button class="key multi-zero" data-key="000">000</button>
 </div>
 
 <script>
@@ -362,6 +366,18 @@ function press(key) {
   } else if (key === '.') {
     if (CURRENCIES[active].decimals === 0) return;  // no decimals for THB
     if (!inputStr.includes('.')) inputStr = (inputStr || '0') + '.';
+  } else if (key === '00' || key === '000') {
+    // Only meaningful when there's already a non-zero number being typed
+    if (!inputStr || inputStr === '0') return;
+    for (const ch of key) {
+      const digitsOnly = inputStr.replace('.', '');
+      if (digitsOnly.length >= 12) break;
+      if (active === 'EUR' && inputStr.includes('.')) {
+        const d = inputStr.split('.')[1] || '';
+        if (d.length >= 2) break;
+      }
+      inputStr += ch;
+    }
   } else if (/^[0-9]$/.test(key)) {
     if (inputStr === '0') inputStr = key;
     else {
